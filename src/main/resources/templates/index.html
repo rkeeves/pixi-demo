@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>PIXI Demo</title>
+</head>
+<body>
+<!-- I used the dev latest build of PIXI -->
+<script th:src="@{/vendor/pixi/dev/pixi.js}"></script>
+<script>
+    const revealedNoBombTileName = "images/visited.png";
+    const unknownTileName = "images/nonvisited.png";
+    const bombTileName = "images/bomb.png";
+    const rows = 8;
+    const columns = 8;
+    //Create a Pixi Application
+    let app = new PIXI.Application({
+            width: 256,
+            height: 256,
+            antialiasing: true,
+            transparent: false,
+            resolution: 1
+        }
+    );
+
+    // PIXI already automatically created a canvas element.
+    // We add this to the document body.
+    document.body.appendChild(app.view);
+
+    const loader = PIXI.Loader.shared;
+
+    loader
+        .add([revealedNoBombTileName,unknownTileName,bombTileName])
+        .load(setup);
+
+    function getTexture(name){
+        return loader.resources[name].texture;
+    }
+
+    let sprites = [];
+
+    let text = null;
+
+    let selbox = null;
+
+    function setup(loader, resources) {
+        // We just populate an array of sprites
+        let i;
+        for(i=0; i<rows; i++){
+            let j;
+            for(j=0; j<columns; j++){
+                let sprite = new PIXI.Sprite(getTexture(unknownTileName));
+                sprite.x = i * app.renderer.width / rows;
+                sprite.y = j * app.renderer.height / columns;
+                sprites.push(sprite);
+            }
+        }
+        sprites.forEach((sprite)=>app.stage.addChild(sprite));
+
+        // This is a selection box
+        selbox = new PIXI.Graphics();
+        selbox.lineStyle(3, 0xFF0000);
+        selbox.drawRect(32, 32, 32, 32);
+        app.stage.addChild(selbox);
+
+        // Random text, I used anchor for centering
+        // use https://pixijs.io/pixi-text-style/# to create PIXI styles
+        const style = new PIXI.TextStyle({
+            fill: "white",
+            fontFamily: "\"Lucida Console\", Monaco, monospace",
+            fontSize: 28,
+            fontWeight: "bold",
+            strokeThickness: 6
+        });
+        text = new PIXI.Text('Hello Pixi ', style);
+        text.x = app.renderer.width / 2;
+        text.y = app.renderer.height / 2;
+        text.roundPixels=true
+        text.anchor.set(0.5);
+        app.stage.addChild(text);
+    }
+
+    window.addEventListener("load",()=>setInterval(update, 500),false);
+
+
+    let counter = 0;
+
+    let designatedSpriteIndexToChangeInNextTick = -1;
+
+    function update(){
+        if(designatedSpriteIndexToChangeInNextTick < 0){
+            designatedSpriteIndexToChangeInNextTick = Math.floor(Math.random() * rows * columns);
+            const sprite = sprites[designatedSpriteIndexToChangeInNextTick];
+            selbox.x = sprite.x - 32;
+            selbox.y = sprite.y - 32;
+        }else{
+            const randomNewImgCode = Math.random();
+            let texture;
+            if(randomNewImgCode < 0.5){
+                texture = getTexture(revealedNoBombTileName);
+            }else{
+                texture = getTexture(bombTileName);
+            }
+            sprites[designatedSpriteIndexToChangeInNextTick].texture = texture;
+            designatedSpriteIndexToChangeInNextTick = -1;
+        }
+        text.text = 'Hello Pixi! ' + counter++;
+        text.updateText();
+    }
+</script>
+</body>
+</html>
