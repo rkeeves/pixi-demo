@@ -52,16 +52,13 @@
                 let sprite = new PIXI.Sprite(getTexture(unknownTileName));
                 sprite.x = i * app.renderer.width / rows;
                 sprite.y = j * app.renderer.height / columns;
+                sprite.interactive = true;
+                sprite.on('mousedown', userClicked);
+                sprite.on('touchstart', userClicked);
                 sprites.push(sprite);
             }
         }
         sprites.forEach((sprite)=>app.stage.addChild(sprite));
-
-        // This is a selection box
-        selbox = new PIXI.Graphics();
-        selbox.lineStyle(3, 0xFF0000);
-        selbox.drawRect(32, 32, 32, 32);
-        app.stage.addChild(selbox);
 
         // Random text, I used anchor for centering
         // use https://pixijs.io/pixi-text-style/# to create PIXI styles
@@ -72,7 +69,7 @@
             fontWeight: "bold",
             strokeThickness: 6
         });
-        text = new PIXI.Text('Hello Pixi ', style);
+        text = new PIXI.Text("Click!", style);
         text.x = app.renderer.width / 2;
         text.y = app.renderer.height / 2;
         text.roundPixels=true
@@ -85,26 +82,19 @@
 
     let counter = 0;
 
-    let designatedSpriteIndexToChangeInNextTick = -1;
+    function userClicked(e){
+        const randomNewImgCode = Math.random();
+        let texture;
+        if(randomNewImgCode < 0.5){
+            texture = getTexture(revealedNoBombTileName);
+        }else{
+            texture = getTexture(bombTileName);
+        }
+        e.target.texture = texture;
+    }
 
     function update(){
-        if(designatedSpriteIndexToChangeInNextTick < 0){
-            designatedSpriteIndexToChangeInNextTick = Math.floor(Math.random() * rows * columns);
-            const sprite = sprites[designatedSpriteIndexToChangeInNextTick];
-            selbox.x = sprite.x - 32;
-            selbox.y = sprite.y - 32;
-        }else{
-            const randomNewImgCode = Math.random();
-            let texture;
-            if(randomNewImgCode < 0.5){
-                texture = getTexture(revealedNoBombTileName);
-            }else{
-                texture = getTexture(bombTileName);
-            }
-            sprites[designatedSpriteIndexToChangeInNextTick].texture = texture;
-            designatedSpriteIndexToChangeInNextTick = -1;
-        }
-        text.text = 'Hello Pixi! ' + counter++;
+        text.text = "Click!(t=" + counter++ +')';
         text.updateText();
     }
 </script>
